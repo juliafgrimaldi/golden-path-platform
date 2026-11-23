@@ -1,0 +1,3 @@
+# Both values are injected by bootstrap/up.sh so forks work without edits.
+repoURL: ""
+targetRevision: main

@@ -1,0 +1,4 @@
+# Real values come from tenants/<name>/tenant.yaml.
+# The contract is values.schema.json: Helm refuses to render anything that breaks it.
+llm:
+  enabled: false

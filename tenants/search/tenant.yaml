@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../charts/tenant/values.schema.json
+name: search
+team:
+  owners:
+    - search-lead@example.com
+    - search-oncall@example.com
+  group: search-engineers
+tier: small
+costCenter: CC-2040
+llm:
+  enabled: true

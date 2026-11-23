@@ -1,0 +1,26 @@
+# Tenants can only ever touch tenant-* namespaces and a short allow-list of kinds.
+# Anything else in a tenant Application fails to sync.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: tenants
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  description: Self-service tenant namespaces created from tenants/*/tenant.yaml
+  sourceRepos:
+    - {{ required "repoURL is required" .Values.repoURL | quote }}
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: "tenant-*"
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ResourceQuota
+    - group: ""
+      kind: LimitRange
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding

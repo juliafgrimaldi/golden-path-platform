@@ -1,0 +1,5 @@
+apiVersion: v2
+name: tenant
+description: Everything a team gets when its tenant.yaml is merged.
+type: application
+version: 0.1.0

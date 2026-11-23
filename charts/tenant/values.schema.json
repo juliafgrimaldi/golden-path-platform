@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "tenant.yaml",
+  "description": "Request for a tenant namespace on the platform.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "team", "tier", "costCenter"],
+  "properties": {
+    "name": {
+      "description": "Tenant name. Must match the folder name. The namespace is tenant-<name>.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,20}[a-z0-9]$"
+    },
+    "team": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owners", "group"],
+      "properties": {
+        "owners": {
+          "description": "People accountable for this tenant.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "format": "email" }
+        },
+        "group": {
+          "description": "Identity-provider group that gets edit access to the namespace.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "tier": {
+      "description": "Size of the resource quota.",
+      "enum": ["small", "medium", "large"]
+    },
+    "costCenter": {
+      "description": "Label stamped on every resource so spend can be attributed.",
+      "type": "string",
+      "pattern": "^CC-[0-9]{4}$"
+    },
+    "llm": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Opt in to the shared LLM gateway (coming in a later milestone).",
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

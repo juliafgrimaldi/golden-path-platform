@@ -1,0 +1,90 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HELM_VERSION: v3.22.1
+  KUBECONFORM_VERSION: v0.8.0
+  KIND_VERSION: v0.33.0
+
+jobs:
+  lint:
+    name: lint & tenant contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install -r scripts/requirements.txt
+      - name: yamllint
+        run: yamllint --strict .
+      - name: shellcheck
+        run: shellcheck -x bootstrap/*.sh scripts/*.sh
+      - name: validate tenants
+        run: python scripts/validate_tenants.py
+
+  manifests:
+    name: helm lint & kubeconform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: install kubeconform
+        run: |
+          curl -sSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            | tar -xz -C /usr/local/bin kubeconform
+      - name: helm lint
+        run: |
+          helm lint platform --set repoURL=https://github.com/example/golden-path-platform.git
+          for f in tenants/*/tenant.yaml; do helm lint charts/tenant --values "$f"; done
+      - name: render
+        run: ./scripts/render.sh
+      - name: kubeconform
+        run: |
+          kubeconform -strict -summary \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            out/
+
+  e2e:
+    name: e2e on kind
+    needs: [lint, manifests]
+    # Argo CD pulls this branch from GitHub, so fork PRs (branch not in this repo) are skipped.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - uses: helm/kind-action@v1.15.2
+        with:
+          version: ${{ env.KIND_VERSION }}
+          install_only: true
+      - name: bootstrap platform
+        env:
+          REPO_URL: https://github.com/${{ github.repository }}.git
+          REVISION: ${{ github.head_ref || github.ref_name }}
+        run: ./bootstrap/up.sh
+      - name: smoke test
+        run: ./bootstrap/smoke-test.sh
+      - name: debug on failure
+        if: failure()
+        run: |
+          kubectl get applications,applicationsets -n argocd -o wide || true
+          kubectl -n argocd get applications -o yaml | grep -A20 'conditions:' || true
+          kubectl get pods -A || true

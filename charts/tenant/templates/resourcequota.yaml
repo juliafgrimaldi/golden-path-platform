@@ -1,0 +1,17 @@
+{{- $tier := index (include "tenant.tiers" . | fromYaml) .Values.tier }}
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tenant-quota
+  namespace: {{ include "tenant.namespace" . }}
+  labels:
+    {{- include "tenant.labels" . | nindent 4 }}
+spec:
+  hard:
+    requests.cpu: {{ $tier.requestsCpu | quote }}
+    requests.memory: {{ $tier.requestsMemory }}
+    limits.cpu: {{ $tier.limitsCpu | quote }}
+    limits.memory: {{ $tier.limitsMemory }}
+    pods: {{ $tier.pods | quote }}
+    services.loadbalancers: "0"
+    services.nodeports: "0"

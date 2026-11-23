@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../charts/tenant/values.schema.json
+name: payments
+team:
+  owners:
+    - payments-lead@example.com
+  group: payments-engineers
+tier: medium
+costCenter: CC-1001

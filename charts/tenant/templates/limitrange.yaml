@@ -1,0 +1,20 @@
+# Defaults so pods without requests/limits still fit the quota instead of being rejected.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: tenant-defaults
+  namespace: {{ include "tenant.namespace" . }}
+  labels:
+    {{- include "tenant.labels" . | nindent 4 }}
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 100m
+        memory: 128Mi
+      default:
+        cpu: 500m
+        memory: 512Mi
+      max:
+        cpu: "2"
+        memory: 4Gi

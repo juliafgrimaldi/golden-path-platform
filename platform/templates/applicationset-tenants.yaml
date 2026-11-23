@@ -1,0 +1,43 @@
+# One folder in tenants/ = one Argo CD Application = one tenant namespace.
+# Adding a tenant is a pull request; removing the folder stops managing it
+# (the namespace itself is kept, see docs/adr/0002).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: tenants
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: {{ .Values.repoURL | quote }}
+        revision: {{ .Values.targetRevision | quote }}
+        files:
+          - path: tenants/*/tenant.yaml
+  template:
+    metadata:
+      name: {{ `'tenant-{{ .name }}'` }}
+      labels:
+        platform.golden-path.io/tenant: {{ `'{{ .name }}'` }}
+    spec:
+      project: tenants
+      sources:
+        - repoURL: {{ .Values.repoURL | quote }}
+          targetRevision: {{ .Values.targetRevision | quote }}
+          path: charts/tenant
+          helm:
+            valueFiles:
+              - {{ `'$values/{{ .path.path }}/tenant.yaml'` }}
+        - repoURL: {{ .Values.repoURL | quote }}
+          targetRevision: {{ .Values.targetRevision | quote }}
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: {{ `'tenant-{{ .name }}'` }}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - ServerSideApply=true

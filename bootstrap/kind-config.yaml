@@ -1,0 +1,10 @@
+# Local cluster. The default CNI and kube-proxy are disabled because Cilium replaces both.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: golden-path
+networking:
+  disableDefaultCNI: true
+  kubeProxyMode: none
+nodes:
+  - role: control-plane
+  - role: worker

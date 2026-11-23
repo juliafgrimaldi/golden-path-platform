@@ -1,0 +1,8 @@
+# Lean Argo CD for a laptop: no Dex, no notifications, plain HTTP behind port-forward.
+configs:
+  params:
+    server.insecure: true
+dex:
+  enabled: false
+notifications:
+  enabled: false
