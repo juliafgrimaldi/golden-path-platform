@@ -6,7 +6,8 @@ set -uo pipefail
 section() { # section <title> <command...>
   local title="$1"; shift
   local out; out="$("$@" 2>&1 | tail -n 40)"
-  printf '### %s\n```\n%s\n```\n' "$title" "$out" >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+  local fence='```'
+  printf '### %s\n%s\n%s\n%s\n' "$title" "$fence" "$out" "$fence" >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
   # Annotations are single-line; GitHub decodes %0A as a newline.
   local encoded="${out//'%'/'%25'}"; encoded="${encoded//$'\n'/'%0A'}"
   echo "::error title=${title}::${encoded:0:4000}"
