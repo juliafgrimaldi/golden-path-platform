@@ -82,9 +82,6 @@ jobs:
         run: ./bootstrap/up.sh
       - name: smoke test
         run: ./bootstrap/smoke-test.sh
-      - name: debug on failure
+      - name: diagnose on failure
         if: failure()
-        run: |
-          kubectl get applications,applicationsets -n argocd -o wide || true
-          kubectl -n argocd get applications -o yaml | grep -A20 'conditions:' || true
-          kubectl get pods -A || true
+        run: ./bootstrap/diagnose.sh
