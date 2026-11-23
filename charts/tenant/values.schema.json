@@ -4,7 +4,12 @@
   "description": "Request for a tenant namespace on the platform.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["name", "team", "tier", "costCenter"],
+  "required": [
+    "name",
+    "team",
+    "tier",
+    "costCenter"
+  ],
   "properties": {
     "name": {
       "description": "Tenant name. Must match the folder name. The namespace is tenant-<name>.",
@@ -14,13 +19,19 @@
     "team": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["owners", "group"],
+      "required": [
+        "owners",
+        "group"
+      ],
       "properties": {
         "owners": {
           "description": "People accountable for this tenant.",
           "type": "array",
           "minItems": 1,
-          "items": { "type": "string", "format": "email" }
+          "items": {
+            "type": "string",
+            "format": "email"
+          }
         },
         "group": {
           "description": "Identity-provider group that gets edit access to the namespace.",
@@ -31,7 +42,11 @@
     },
     "tier": {
       "description": "Size of the resource quota.",
-      "enum": ["small", "medium", "large"]
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ]
     },
     "costCenter": {
       "description": "Label stamped on every resource so spend can be attributed.",
@@ -45,6 +60,50 @@
         "enabled": {
           "description": "Opt in to the shared LLM gateway (coming in a later milestone).",
           "type": "boolean"
+        }
+      }
+    },
+    "network": {
+      "description": "Who may call this tenant and where it may call out to. Everything else is denied.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowFrom": {
+          "description": "Tenants allowed to open connections INTO this tenant. Only the receiving tenant can grant access.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tenant",
+              "ports"
+            ],
+            "properties": {
+              "tenant": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]{1,20}[a-z0-9]$"
+              },
+              "ports": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                }
+              }
+            }
+          }
+        },
+        "egressFQDNs": {
+          "description": "External hosts this tenant may reach on 443. Use *.example.com for subdomains.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(\\*\\.)?([a-z0-9-]+\\.)+[a-z]{2,}$"
+          }
         }
       }
     }

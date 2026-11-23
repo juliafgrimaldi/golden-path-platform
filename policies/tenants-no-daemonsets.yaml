@@ -1,0 +1,27 @@
+# Node-level agents (CNI, log/metric collectors, device plugins) belong to the
+# platform, not to tenants. See docs/adr/0005.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: tenants-no-daemonsets
+  annotations:
+    policies.kyverno.io/description: >-
+      Tenants cannot run DaemonSets. Per-node concerns are platform services.
+spec:
+  validationActions:
+    - Deny
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+        - key: platform.golden-path.io/tenant
+          operator: Exists
+    resourceRules:
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["daemonsets"]
+  validations:
+    - expression: "false"
+      message: >-
+        DaemonSets are not allowed in tenant namespaces. Node-level agents are
+        provided by the platform (see docs/adr/0005-node-agents-are-platform-owned.md).

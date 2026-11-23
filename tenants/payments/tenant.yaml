@@ -6,3 +6,7 @@ team:
   group: payments-engineers
 tier: medium
 costCenter: CC-1001
+network:
+  # No allowFrom: nobody outside the namespace may call payments.
+  egressFQDNs:
+    - api.stripe.com

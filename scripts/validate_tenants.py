@@ -22,6 +22,7 @@ def main() -> int:
     validator = Draft7Validator(SCHEMA, format_checker=FormatChecker())
     errors: list[str] = []
     cost_centers: dict[str, str] = {}
+    allow_from: list[tuple[str, str]] = []  # (where, caller tenant)
 
     tenant_dirs = sorted(p for p in (ROOT / "tenants").iterdir() if p.is_dir())
     if not tenant_dirs:
@@ -52,6 +53,16 @@ def main() -> int:
             errors.append(f"{where}: costCenter {cc} already used by {cost_centers[cc]}")
         elif cc:
             cost_centers[cc] = tenant_dir.name
+        for rule in (tenant.get("network") or {}).get("allowFrom") or []:
+            if isinstance(rule, dict) and rule.get("tenant") == tenant_dir.name:
+                errors.append(f"{where}: allowFrom lists itself; same-namespace traffic is always allowed")
+            elif isinstance(rule, dict):
+                allow_from.append((where, rule.get("tenant")))
+
+    known = {d.name for d in tenant_dirs}
+    for where, caller in allow_from:
+        if caller not in known:
+            errors.append(f"{where}: allowFrom references unknown tenant '{caller}'")
 
     for line in errors:
         print(f"ERROR {line}")

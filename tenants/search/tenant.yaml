@@ -9,3 +9,8 @@ tier: small
 costCenter: CC-2040
 llm:
   enabled: true
+network:
+  # payments calls the search API; search owners approved it in the PR.
+  allowFrom:
+    - tenant: payments
+      ports: [8080]

@@ -24,3 +24,5 @@ spec:
       kind: LimitRange
     - group: rbac.authorization.k8s.io
       kind: RoleBinding
+    - group: cilium.io
+      kind: CiliumNetworkPolicy

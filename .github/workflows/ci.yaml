@@ -57,7 +57,7 @@ jobs:
           kubeconform -strict -summary \
             -schema-location default \
             -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
-            out/
+            out/ policies/
 
   e2e:
     name: e2e on kind

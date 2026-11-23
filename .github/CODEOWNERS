@@ -1,0 +1,7 @@
+# Every change needs the platform team.
+* @juliafgrimaldi
+
+# In a real org each tenant folder is also owned by its team, so granting
+# network.allowFrom needs the RECEIVING team's approval (docs/adr/0004):
+# /tenants/search/    @acme/search-engineers @acme/platform
+# /tenants/payments/  @acme/payments-engineers @acme/platform

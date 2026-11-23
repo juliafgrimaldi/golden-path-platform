@@ -1,3 +1,6 @@
-# Both values are injected by bootstrap/up.sh so forks work without edits.
+# repoURL and targetRevision are injected by bootstrap/up.sh so forks work without edits.
 repoURL: ""
 targetRevision: main
+
+kyverno:
+  chartVersion: 3.10.0

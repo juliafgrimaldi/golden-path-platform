@@ -1,0 +1,40 @@
+# Network access between tenants is granted only through tenant.yaml (reviewed PR).
+# Only Argo CD may create, change or delete network policies in tenant namespaces;
+# otherwise a tenant could delete its default-deny or open itself up outside review.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: tenants-network-via-git
+  annotations:
+    policies.kyverno.io/description: >-
+      Network policies in tenant namespaces are managed by the platform from tenant.yaml.
+spec:
+  validationActions:
+    - Deny
+  evaluation:
+    background:
+      # The rule looks at who sent the request, which only exists at admission time.
+      enabled: false
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+        - key: platform.golden-path.io/tenant
+          operator: Exists
+    resourceRules:
+      - apiGroups: ["networking.k8s.io"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE", "DELETE"]
+        resources: ["networkpolicies"]
+      - apiGroups: ["cilium.io"]
+        apiVersions: ["v2"]
+        operations: ["CREATE", "UPDATE", "DELETE"]
+        resources: ["ciliumnetworkpolicies"]
+  matchConditions:
+    - name: not-argocd
+      expression: >-
+        request.userInfo.username != "system:serviceaccount:argocd:argocd-application-controller"
+  validations:
+    - expression: "false"
+      message: >-
+        Network policies in tenant namespaces are managed from tenants/<name>/tenant.yaml.
+        Open a PR adding network.allowFrom to the receiving tenant.
