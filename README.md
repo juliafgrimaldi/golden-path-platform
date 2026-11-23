@@ -158,10 +158,6 @@ root Application; everything after that is GitOps ([ADR 3](docs/adr/0003-cilium-
 workloads. `Delete=false` on the Namespace turns offboarding into a deliberate step instead of a
 side effect of a bad merge ([ADR 2](docs/adr/0002-namespaces-are-never-pruned.md)).
 
-**Developing on Windows, shipping to Linux.** Git on Windows does not record the executable bit,
-so `./bootstrap/up.sh` would have failed on the CI runner. `git update-index --chmod=+x` plus a
-`.gitattributes` forcing LF fixed it before the first push.
-
 **Test the guardrails, not just the install.** The e2e job does not stop at "pods are running": it
 proves payments can call search, search cannot call payments, privileged pods are rejected and a
 DaemonSet in a tenant namespace is denied. If a policy silently stops working, CI goes red.
