@@ -1,6 +1,6 @@
 # Golden Path Platform
 
-[![ci](https://github.com/OWNER/golden-path-platform/actions/workflows/ci.yaml/badge.svg)](https://github.com/OWNER/golden-path-platform/actions/workflows/ci.yaml)
+[![ci](https://github.com/juliafgrimaldi/golden-path-platform/actions/workflows/ci.yaml/badge.svg)](https://github.com/juliafgrimaldi/golden-path-platform/actions/workflows/ci.yaml)
 
 A self-service, multi-tenant Kubernetes platform. A team opens a pull request with a ten-line
 `tenant.yaml`; after merge it gets an isolated, policy-guarded namespace — and, if it asks for it,
