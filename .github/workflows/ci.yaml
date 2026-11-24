@@ -13,6 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/echo
   HELM_VERSION: v3.22.1
   KUBECONFORM_VERSION: v0.8.0
   KIND_VERSION: v0.33.0
@@ -59,9 +60,56 @@ jobs:
             -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
             out/ policies/
 
+  image:
+    name: build, push & sign echo
+    runs-on: ubuntu-latest
+    # Only this job may push packages and ask GitHub for an OIDC token (used by cosign).
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    outputs:
+      ref: ${{ steps.ref.outputs.ref }}
+    env:
+      PUBLISH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: log in to ghcr.io
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: build (go test runs inside) and push
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: apps/echo
+          push: ${{ env.PUBLISH == 'true' }}
+          tags: |
+            ${{ env.IMAGE }}:main
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
+      - uses: sigstore/cosign-installer@v4.1.3
+        if: env.PUBLISH == 'true'
+      - name: sign (keyless, identity = this workflow on main)
+        if: env.PUBLISH == 'true'
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: cosign sign --yes "${IMAGE}@${DIGEST}"
+      - name: image reference for e2e
+        id: ref
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        # main tests the image it just signed; PRs test the last signed image from main.
+        run: |
+          if [[ "$PUBLISH" == "true" ]]; then echo "ref=${IMAGE}@${DIGEST}" >> "$GITHUB_OUTPUT"
+          else echo "ref=${IMAGE}:main" >> "$GITHUB_OUTPUT"; fi
+
   e2e:
     name: e2e on kind
-    needs: [lint, manifests]
+    needs: [lint, manifests, image]
     # Argo CD pulls this branch from GitHub, so fork PRs (branch not in this repo) are skipped.
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
